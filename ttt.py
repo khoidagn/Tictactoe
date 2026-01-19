@@ -19,6 +19,7 @@ CIRCLE_RADIUS = SQUARE_SIZE // 3
 CIRCLE_WIDTH = 15
 CROSS_WIDTH = 25
 SPACE = SQUARE_SIZE // 4
+WINNER = 3
 
 # Initialize screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -32,15 +33,14 @@ def draw_line(color = WHITE):
         pygame.draw.line(screen, color, start_pos=(0, SQUARE_SIZE *i), end_pos = (WIDTH, SQUARE_SIZE *i), width= LINE_WIDTH)
         pygame.draw.line(screen, color, start_pos=(SQUARE_SIZE *i, 0), end_pos = (SQUARE_SIZE *i, HEIGHT), width= LINE_WIDTH)
 
-def draw_figures():
+def draw_figures(color = GRAY):
     for row in range(BOARD_ROWS):
         for col in range(BOARD_COLS):
             if board[row][col] == 2: # AI
-                pygame.draw.circle(screen, GRAY, (int(col * SQUARE_SIZE + SQUARE_SIZE//2), int(row * SQUARE_SIZE + SQUARE_SIZE//2)), CIRCLE_RADIUS, CIRCLE_WIDTH)
+                pygame.draw.circle(screen, color, (int(col * SQUARE_SIZE + SQUARE_SIZE//2), int(row * SQUARE_SIZE + SQUARE_SIZE//2)), CIRCLE_RADIUS, CIRCLE_WIDTH)
             elif board[row][col] == 1: # Player 1
-                pygame.draw.line(screen, GRAY, start_pos=(col * SQUARE_SIZE + SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE), end_pos=(col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SPACE), width=CROSS_WIDTH)
-                pygame.draw.line(screen, GRAY, start_pos=(col * SQUARE_SIZE + SPACE, row * SQUARE_SIZE + SPACE), end_pos=(col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE), width=CROSS_WIDTH)
-
+                pygame.draw.line(screen, color, start_pos=(col * SQUARE_SIZE + SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE), end_pos=(col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SPACE), width=CROSS_WIDTH)
+                pygame.draw.line(screen, color, start_pos=(col * SQUARE_SIZE + SPACE, row * SQUARE_SIZE + SPACE), end_pos=(col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE), width=CROSS_WIDTH)
 def mark_square(row, col, player):
     board[row][col] = player
 def available_square(row, col):
@@ -52,18 +52,14 @@ def is_board_full(check_board = board):
                 return False
     return True
 
-def check_win(player, check_board = board):
-    for col in range(BOARD_COLS):
-        if check_board[0][col] == player and check_board[1][col] == player and check_board[2][col] == player:
-            return True
-    for row in range(BOARD_ROWS):
-        if check_board[row][0] == player and check_board[row][1] == player and check_board[row][2] == player:
-            return True
-    if check_board[2][0] == player and check_board[1][1] == player and check_board[0][2] == player:
-        return True
-    if check_board[0][0] == player and check_board[1][1] == player and check_board[2][2] == player:
-        return True
+def check_win(player, check_board=board):
+    for i in range(BOARD_ROWS):
+        if all(check_board[i, :] == player): return True # Kiểm tra hàng i
+        if all(check_board[:, i] == player): return True # Kiểm tra cột i
+    if all(np.diagonal(check_board) == player): return True
+    if all(np.diagonal(np.fliplr(check_board)) == player): return True
     return False
+
 
 def restart_game():
     screen.fill(BLACK)
@@ -124,7 +120,7 @@ game_over = False
 
 while True: 
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
             sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
             mouseX = event.pos[0]
@@ -160,6 +156,7 @@ while True:
             draw_line(RED)
         else:
             draw_line(GRAY)
-            draw_figures(GRAY)
+            draw_figures()
+
     pygame.display.update()
         
